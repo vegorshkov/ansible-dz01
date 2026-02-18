@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+echo "=== Building and starting containers ==="
+docker build -t centos7-ansible ./centos 2>/dev/null || true
+docker build -t ubuntu-ansible ./ubuntu 2>/dev/null || true
+docker build -t fedora-ansible ./fedora 2>/dev/null || true
+docker stop centos7 ubuntu fedora 2>/dev/null || true
+docker rm centos7 ubuntu fedora 2>/dev/null || true
+docker run -d --name centos7 centos7-ansible
+docker run -d --name ubuntu ubuntu-ansible
+docker run -d --name fedora fedora-ansible
+echo "=== Waiting for containers to start ==="
+sleep 5
+echo "=== Running ansible-playbook (you will be prompted for vault password) ==="
+ansible-playbook -i inventory/prod.yml site.yml --ask-vault-pass
+echo "=== Stopping containers ==="
+docker stop centos7 ubuntu fedora
+echo "=== Done ==="
